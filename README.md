@@ -1,2 +1,2 @@
-# VoVa4gA-bot
-MyFirstBot
+# Мой Telegram бот
+Бот работает 24/7
