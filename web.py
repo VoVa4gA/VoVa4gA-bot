@@ -256,7 +256,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(random.choice(general_responses))
 
 # === ГЛАВНАЯ ФУНКЦИЯ ===
-async def main():
+def main():
     if not TOKEN:
         print("❌ ОШИБКА: Не найден токен бота!")
         print("Проверь Environment Variables на Render")
@@ -265,29 +265,28 @@ async def main():
     print(f"✅ Токен загружен успешно")
     print("🚀 Запуск бота...")
     
-    # Создаем приложение
-    app = Application.builder().token(TOKEN).build()
-    
-    # Добавляем обработчики команд
-    app.add_handler(CommandHandler('start', start_command))
-    app.add_handler(CommandHandler('help', help_command))
-    app.add_handler(CommandHandler('time', time_command))
-    app.add_handler(CommandHandler('joke', joke_command))
-    
-    # Добавляем обработчик текстовых сообщений
-    app.add_handler(MessageHandler(filters.TEXT, handle_text))
-    
-    print('✅ Бот запущен и работает...')
-    
-    # Запускаем вебхук для Render
-    WEBHOOK_URL = f"https://{os.environ.get('RENDER_EXTERNAL_URL', 'your-app-name.onrender.com')}"
-    
-    await app.run_webhook(
-        listen="0.0.0.0",
-        port=PORT,
-        url_path=TOKEN,
-        webhook_url=f"{WEBHOOK_URL}/{TOKEN}"
-    )
+    try:
+        # Создаем приложение
+        app = Application.builder().token(TOKEN).build()
+        
+        # Добавляем обработчики команд
+        app.add_handler(CommandHandler('start', start_command))
+        app.add_handler(CommandHandler('help', help_command))
+        app.add_handler(CommandHandler('time', time_command))
+        app.add_handler(CommandHandler('joke', joke_command))
+        
+        # Добавляем обработчик текстовых сообщений
+        app.add_handler(MessageHandler(filters.TEXT, handle_text))
+        
+        print('✅ Бот запущен и работает... Нажмите Ctrl+C для остановки')
+        
+        # Используем polling вместо вебхуков
+        app.run_polling()
+        
+    except Exception as e:
+        print(f"❌ Ошибка при запуске бота: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == '__main__':
     main()
