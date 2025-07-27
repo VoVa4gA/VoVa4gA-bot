@@ -2,14 +2,16 @@ from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import datetime
 import random
+import os
 import asyncio
 import aiohttp
 from bs4 import BeautifulSoup
-import os
 
-# Получаем токен из переменных окружения
+# Получаем токен и порт из переменных окружения
 TOKEN = os.environ.get('BOT_TOKEN')
-PORT = int(os.environ.get('PORT', 8080))
+PORT = int(os.environ.get('PORT', 10000))
+
+print(f"Загружаю токен: {TOKEN is not None}")
 
 # === ФУНКЦИИ ДЛЯ ПОЛУЧЕНИЯ АНЕКДОТОВ ИЗ ИНТЕРНЕТА ===
 async def get_joke_from_anekdot_ru():
@@ -18,7 +20,7 @@ async def get_joke_from_anekdot_ru():
         timeout = aiohttp.ClientTimeout(total=10)
         async with aiohttp.ClientSession(timeout=timeout) as session:
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
             async with session.get('https://www.anekdot.ru/random/anekdot/', headers=headers) as response:
                 if response.status == 200:
@@ -30,7 +32,7 @@ async def get_joke_from_anekdot_ru():
                         if joke and len(joke) > 10 and len(joke) < 1000 and 'anekdot.ru' not in joke.lower():
                             return joke
     except Exception as e:
-        print(f"Ошибка при получении анекдота с anekdot.ru: {e}")
+        print(f"Ошибка при получении анекдота: {e}")
     return None
 
 async def get_joke_from_backup_list():
@@ -254,9 +256,16 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(random.choice(general_responses))
 
 # === ГЛАВНАЯ ФУНКЦИЯ ===
-def main():
-    print("Запуск бота на веб-сервере...")
+async def main():
+    if not TOKEN:
+        print("❌ ОШИБКА: Не найден токен бота!")
+        print("Проверь Environment Variables на Render")
+        return
     
+    print(f"✅ Токен загружен успешно")
+    print("🚀 Запуск бота...")
+    
+    # Создаем приложение
     app = Application.builder().token(TOKEN).build()
     
     # Добавляем обработчики команд
@@ -268,15 +277,17 @@ def main():
     # Добавляем обработчик текстовых сообщений
     app.add_handler(MessageHandler(filters.TEXT, handle_text))
     
-    print('Бот запущен и работает...')
+    print('✅ Бот запущен и работает...')
     
-    # Запускаем вебхук
-    app.run_webhook(
+    # Запускаем вебхук для Render
+    WEBHOOK_URL = f"https://{os.environ.get('RENDER_EXTERNAL_URL', 'your-app-name.onrender.com')}"
+    
+    await app.run_webhook(
         listen="0.0.0.0",
         port=PORT,
         url_path=TOKEN,
-        webhook_url=f"https://ваш-домен.onrender.com/{TOKEN}"
+        webhook_url=f"{WEBHOOK_URL}/{TOKEN}"
     )
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
