@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 import os
 
 # Получаем токен из переменных окружения
-TOKEN = os.environ.get('8120964094:AAGDoZt_XjNHOY3VbQH2LK22fPq8HdPJCck')
+TOKEN = os.environ.get('BOT_TOKEN')
 PORT = int(os.environ.get('PORT', 8080))
 
 # === ФУНКЦИИ ДЛЯ ПОЛУЧЕНИЯ АНЕКДОТОВ ИЗ ИНТЕРНЕТА ===
